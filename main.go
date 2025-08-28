@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -77,7 +78,7 @@ func main() {
 	}
 
 	// If modifying these scopes, delete your previously saved token.json.
-	config, err := google.ConfigFromJSON(b, drive.DriveMetadataReadonlyScope)
+	config, err := google.ConfigFromJSON(b, drive.DriveReadonlyScope)
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
@@ -100,5 +101,27 @@ func main() {
 		for _, i := range r.Files {
 			fmt.Printf("%s (%s)\n", i.Name, i.Id)
 		}
+	}
+
+	var fileId string
+	fmt.Print("Enter the file ID that you want to download from: ")
+	fmt.Scanln(&fileId)
+	fmt.Printf("Downloading file with ID: %s", fileId)
+
+	resp, err := srv.Files.Export(fileId, "application/pdf").Download()
+	if err != nil {
+		log.Fatalf("Unable to download file: %v", err)
+	}
+	defer resp.Body.Close()
+
+	outFile, err := os.Create("output.pdf")
+	if err != nil {
+		log.Fatalf("Unable to create file: %v", err)
+	}
+	defer outFile.Close()
+
+	_, err = io.Copy(outFile, resp.Body)
+	if err != nil {
+		log.Fatalf("Unable to save file: %v", err)
 	}
 }
