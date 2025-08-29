@@ -1,3 +1,6 @@
 # Google API
 credentials.json
 token.json
+
+# Stored paths
+paths.json
