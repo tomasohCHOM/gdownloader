@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"fmt"
@@ -9,15 +9,12 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(pathCmd)
-	pathCmd.AddCommand(pathAddCmd)
-	pathCmd.AddCommand(pathRemoveCmd)
-	pathCmd.AddCommand(pathListCmd)
-
-	rootCmd.AddCommand(downloadCmd)
+	PathCmd.AddCommand(pathAddCmd)
+	PathCmd.AddCommand(pathRemoveCmd)
+	PathCmd.AddCommand(pathListCmd)
 }
 
-var pathCmd = &cobra.Command{
+var PathCmd = &cobra.Command{
 	Use:   "path",
 	Short: "Manage paths where you can download Google Drive files to",
 }
@@ -94,13 +91,5 @@ var pathListCmd = &cobra.Command{
 			fmt.Printf("%d. %s\n", i+1, p)
 		}
 		return nil
-	},
-}
-
-var downloadCmd = &cobra.Command{
-	Use:   "download",
-	Short: "Download Google Drive files to a specified path",
-
-	Run: func(cmd *cobra.Command, args []string) {
 	},
 }

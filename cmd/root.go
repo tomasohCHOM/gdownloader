@@ -4,7 +4,13 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/tomasohCHOM/google-drive-downloader/cmd/commands"
 )
+
+func init() {
+	rootCmd.AddCommand(commands.PathCmd)
+	rootCmd.AddCommand(commands.DownloadCmd)
+}
 
 var rootCmd = &cobra.Command{
 	Use:   "gd-downloader",
