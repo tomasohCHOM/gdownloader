@@ -7,7 +7,7 @@ import (
 )
 
 type Store struct {
-	Paths []string `json:"paths"`
+	Paths map[string]string `json:"paths"`
 }
 
 func getStorePath() (string, error) {
@@ -25,7 +25,7 @@ func Load() (*Store, error) {
 	}
 	data, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
-		return &Store{Paths: []string{}}, nil
+		return &Store{Paths: map[string]string{}}, nil
 	} else if err != nil {
 		return nil, err
 	}

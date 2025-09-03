@@ -1,6 +1,6 @@
 package main
 
-import "github.com/tomasohCHOM/google-drive-downloader/cmd"
+import "github.com/tomasohCHOM/gdownloader/cmd"
 
 func main() {
 	cmd.Execute()

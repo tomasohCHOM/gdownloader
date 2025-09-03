@@ -1,4 +1,4 @@
-module github.com/tomasohCHOM/google-drive-downloader
+module github.com/tomasohCHOM/gdownloader
 
 go 1.22.3
 

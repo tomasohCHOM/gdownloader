@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/tomasohCHOM/google-drive-downloader/cmd/commands"
+	"github.com/tomasohCHOM/gdownloader/cmd/commands"
 )
 
 func init() {

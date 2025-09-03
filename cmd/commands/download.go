@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/tomasohCHOM/google-drive-downloader/cmd/drive"
+	"github.com/tomasohCHOM/gdownloader/cmd/drive"
 )
 
 var DownloadCmd = &cobra.Command{

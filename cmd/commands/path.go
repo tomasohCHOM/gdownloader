@@ -2,13 +2,16 @@ package commands
 
 import (
 	"fmt"
-	"slices"
 
 	"github.com/spf13/cobra"
-	"github.com/tomasohCHOM/google-drive-downloader/cmd/store"
+	"github.com/tomasohCHOM/gdownloader/cmd/store"
 )
 
 func init() {
+	pathAddCmd.Flags().StringP("alias", "a", "", "Alias of the path to add")
+	pathAddCmd.Flags().StringP("dir", "d", "", "Directory path to add")
+	pathRemoveCmd.Flags().StringP("alias", "a", "", "Alias of the path to remove")
+
 	PathCmd.AddCommand(pathAddCmd)
 	PathCmd.AddCommand(pathRemoveCmd)
 	PathCmd.AddCommand(pathListCmd)
@@ -22,18 +25,19 @@ var PathCmd = &cobra.Command{
 var pathAddCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Store a new path",
-	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		dir := args[0]
+		alias := cmd.Flag("alias").Value.String()
+		dir := cmd.Flag("dir").Value.String()
 		store, err := store.Load()
 		if err != nil {
 			return err
 		}
-		if slices.Contains(store.Paths, dir) {
+		_, ok := store.Paths[alias]
+		if ok {
 			fmt.Println("Path already exits:", dir)
 			return nil
 		}
-		store.Paths = append(store.Paths, dir)
+		store.Paths[alias] = dir
 		if err := store.Save(); err != nil {
 			return err
 		}
@@ -44,31 +48,22 @@ var pathAddCmd = &cobra.Command{
 var pathRemoveCmd = &cobra.Command{
 	Use:   "remove [path]",
 	Short: "Remove a path",
-	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		dir := args[0]
+		alias := cmd.Flag("alias").Value.String()
 		store, err := store.Load()
 		if err != nil {
 			return err
 		}
-		newPaths := []string{}
-		found := false
-		for _, p := range store.Paths {
-			if p != dir {
-				newPaths = append(newPaths, p)
-			} else {
-				found = true
-			}
-		}
-		if !found {
-			fmt.Println("Path not found:", dir)
+		_, ok := store.Paths[alias]
+		if !ok {
+			fmt.Println("Path alias not found:", alias)
 			return nil
 		}
-		store.Paths = newPaths
+		delete(store.Paths, alias)
 		if err := store.Save(); err != nil {
 			return err
 		}
-		fmt.Println("Removed path:", dir)
+		fmt.Println("Removed path with alias:", alias)
 		return nil
 	},
 }
@@ -81,14 +76,12 @@ var pathListCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-
 		if len(store.Paths) == 0 {
 			fmt.Println("No paths saved.")
 			return nil
 		}
-
-		for i, p := range store.Paths {
-			fmt.Printf("%d. %s\n", i+1, p)
+		for alias, dir := range store.Paths {
+			fmt.Printf("%s: %s\n", alias, dir)
 		}
 		return nil
 	},
