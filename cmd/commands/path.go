@@ -20,6 +20,32 @@ func init() {
 var PathCmd = &cobra.Command{
 	Use:   "path",
 	Short: "Manage paths where you can download Google Drive files to",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// interactive menu here
+		for {
+			fmt.Println("\nPath Menu")
+			fmt.Println("1. Add path")
+			fmt.Println("2. Remove path")
+			fmt.Println("3. List paths")
+			fmt.Println("4. Exit")
+			var choice int
+			fmt.Print("Choose an option: ")
+			fmt.Scan(&choice)
+
+			switch choice {
+			case 1:
+				return pathAddCmd.RunE(pathAddCmd, args)
+			case 2:
+				return pathRemoveCmd.RunE(pathRemoveCmd, args)
+			case 3:
+				return pathListCmd.RunE(pathListCmd, args)
+			case 4:
+				return nil
+			default:
+				fmt.Println("Invalid choice")
+			}
+		}
+	},
 }
 
 var pathAddCmd = &cobra.Command{
