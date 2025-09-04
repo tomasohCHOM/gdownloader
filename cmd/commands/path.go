@@ -2,9 +2,13 @@ package commands
 
 import (
 	"fmt"
+	"os"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"github.com/tomasohCHOM/gdownloader/cmd/store"
+	"github.com/tomasohCHOM/gdownloader/cmd/ui/selector"
+	"github.com/tomasohCHOM/gdownloader/cmd/ui/text"
 )
 
 func init() {
@@ -21,17 +25,16 @@ var PathCmd = &cobra.Command{
 	Use:   "path",
 	Short: "Manage paths where you can download Google Drive files to",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// interactive menu here
+		var p *tea.Program
+		header := "Choose which path actions you would like to execute:"
+		options := []string{"Add path", "Remove path", "List paths", "Exit"}
 		for {
-			fmt.Println("\nPath Menu")
-			fmt.Println("1. Add path")
-			fmt.Println("2. Remove path")
-			fmt.Println("3. List paths")
-			fmt.Println("4. Exit")
-			var choice int
-			fmt.Print("Choose an option: ")
-			fmt.Scan(&choice)
-
+			p = tea.NewProgram(selector.InitialSelectionModel(header, options))
+			if _, err := p.Run(); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				return err
+			}
+			choice := 1
 			switch choice {
 			case 1:
 				return pathAddCmd.RunE(pathAddCmd, args)
@@ -52,8 +55,23 @@ var pathAddCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Store a new path",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		var p *tea.Program
 		alias := cmd.Flag("alias").Value.String()
+		if len(alias) == 0 {
+			p = tea.NewProgram(text.InitialTextModel("Enter the alias of the path to add", ""))
+			if _, err := p.Run(); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				return err
+			}
+		}
 		dir := cmd.Flag("dir").Value.String()
+		if len(dir) == 0 {
+			p = tea.NewProgram(text.InitialTextModel("Enter the directory path to add", ""))
+			if _, err := p.Run(); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				return err
+			}
+		}
 		store, err := store.Load()
 		if err != nil {
 			return err
