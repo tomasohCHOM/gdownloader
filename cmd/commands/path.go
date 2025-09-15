@@ -25,24 +25,22 @@ var PathCmd = &cobra.Command{
 	Use:   "path",
 	Short: "Manage paths where you can download Google Drive files to",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var p *tea.Program
 		header := "Choose which path actions you would like to execute:"
 		options := []string{"Add path", "Remove path", "List paths", "Exit"}
 		for {
-			p = tea.NewProgram(selector.InitialSelectionModel(header, options))
-			if _, err := p.Run(); err != nil {
-				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-				return err
+			idx, _, err := selector.RunSelector(header, options)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Selection error: %v\n", err)
+				return nil
 			}
-			choice := 1
-			switch choice {
-			case 1:
+			switch idx {
+			case 0:
 				return pathAddCmd.RunE(pathAddCmd, args)
-			case 2:
+			case 1:
 				return pathRemoveCmd.RunE(pathRemoveCmd, args)
-			case 3:
+			case 2:
 				return pathListCmd.RunE(pathListCmd, args)
-			case 4:
+			case 3:
 				return nil
 			default:
 				fmt.Println("Invalid choice")

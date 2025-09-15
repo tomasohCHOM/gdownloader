@@ -8,7 +8,7 @@ import (
 	"github.com/tomasohCHOM/gdownloader/cmd/ui/styles"
 )
 
-type model struct {
+type Model struct {
 	header   string
 	options  []string
 	cursor   int
@@ -16,8 +16,8 @@ type model struct {
 	err      error
 }
 
-func InitialSelectionModel(header string, options []string) model {
-	return model{
+func InitialSelectionModel(header string, options []string) Model {
+	return Model{
 		header:   header,
 		options:  options,
 		selected: -1,
@@ -26,11 +26,11 @@ func InitialSelectionModel(header string, options []string) model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -59,7 +59,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m Model) View() string {
 	s := strings.Builder{}
 	s.WriteString(fmt.Sprintf("%s\n", styles.HeaderStyle.Render(m.header)))
 	for i, choice := range m.options {
@@ -81,11 +81,19 @@ func (m model) View() string {
 	return s.String()
 }
 
-func (m *model) handleSelection() (string, error) {
-	for i := range m.options {
-		if i == m.selected {
-			return m.options[i], nil
-		}
+func RunSelector(header string, options []string) (int, string, error) {
+	m0 := InitialSelectionModel(header, options)
+	p := tea.NewProgram(m0)
+	mFinal, err := p.Run()
+	if err != nil {
+		return -1, "", err
 	}
-	return "", fmt.Errorf("no options selected")
+	sel, ok := mFinal.(Model)
+	if !ok {
+		return -1, "", fmt.Errorf("unexpected model type %T", mFinal)
+	}
+	if sel.selected < 0 || sel.selected >= len(options) {
+		return -1, "", fmt.Errorf("no valid selection made")
+	}
+	return sel.selected, options[sel.selected], nil
 }

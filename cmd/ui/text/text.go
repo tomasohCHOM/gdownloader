@@ -12,18 +12,23 @@ type errMsg error
 
 type model struct {
 	textInput textinput.Model
-	header    string
-	err       error
+	prompt    string
+	done      bool
 	errMsg    string
+	err       error
 }
 
-func InitialTextModel(header string, errMsg string) model {
+func InitialTextModel(prompt string) model {
 	ti := textinput.New()
+	ti.Placeholder = ""
 	ti.Focus()
+	ti.CharLimit = 156 // arbitrary, adjust as needed
+	ti.Width = 40
+
 	return model{
+		prompt:    prompt,
 		textInput: ti,
-		header:    header,
-		err:       nil,
+		done:      false,
 	}
 }
 
@@ -59,7 +64,17 @@ func (m model) View() string {
 	return fmt.Sprintf(
 		"%s\n%s\n\n%s",
 		styles.DimStyle.Render(m.errMsg),
-		styles.HeaderStyle.Render(m.header),
+		styles.HeaderStyle.Render(m.prompt),
 		styles.SelectedTextStyle.Render(m.textInput.View()),
 	)
+}
+
+func RunTextInput(prompt string) (string, error) {
+	p := tea.Program(InitialTextModel(prompt))
+	m, err := p.Run()
+	if err != nil {
+		return "", err
+	}
+	final := m.(Model)
+	return final.textInput.Value(), nil
 }
