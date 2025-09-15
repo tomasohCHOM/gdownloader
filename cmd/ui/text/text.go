@@ -8,14 +8,10 @@ import (
 	"github.com/tomasohCHOM/gdownloader/cmd/ui/styles"
 )
 
-type errMsg error
-
 type model struct {
 	textInput textinput.Model
 	prompt    string
 	done      bool
-	errMsg    string
-	err       error
 }
 
 func InitialTextModel(prompt string) model {
@@ -43,17 +39,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
-			// m.userOptions.ExitState = true
 			return m, tea.Quit
 
 		case tea.KeyEnter:
 			m.textInput.Blur()
-			// m.userOptions.Username = m.textInput.Value()
 			return m, tea.Quit
 		}
-	case errMsg:
-		m.err = msg
-		return m, nil
 	}
 
 	m.textInput, cmd = m.textInput.Update(msg)
@@ -62,19 +53,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	return fmt.Sprintf(
-		"%s\n%s\n\n%s",
-		styles.DimStyle.Render(m.errMsg),
+		"%s\n%s\n\n",
 		styles.HeaderStyle.Render(m.prompt),
 		styles.SelectedTextStyle.Render(m.textInput.View()),
 	)
 }
 
 func RunTextInput(prompt string) (string, error) {
-	p := tea.Program(InitialTextModel(prompt))
+	p := tea.NewProgram(InitialTextModel(prompt))
 	m, err := p.Run()
 	if err != nil {
 		return "", err
 	}
-	final := m.(Model)
+	final := m.(model)
 	return final.textInput.Value(), nil
 }

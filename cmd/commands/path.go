@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"github.com/tomasohCHOM/gdownloader/cmd/store"
 	"github.com/tomasohCHOM/gdownloader/cmd/ui/selector"
@@ -53,22 +52,23 @@ var pathAddCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Store a new path",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var p *tea.Program
 		alias := cmd.Flag("alias").Value.String()
 		if len(alias) == 0 {
-			p = tea.NewProgram(text.InitialTextModel("Enter the alias of the path to add", ""))
-			if _, err := p.Run(); err != nil {
+			aliasInput, err := text.RunTextInput("Enter the alias of the path to add")
+			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 				return err
 			}
+			alias = aliasInput
 		}
 		dir := cmd.Flag("dir").Value.String()
 		if len(dir) == 0 {
-			p = tea.NewProgram(text.InitialTextModel("Enter the directory path to add", ""))
-			if _, err := p.Run(); err != nil {
+			dirInput, err := text.RunTextInput("Enter the directory path to add")
+			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 				return err
 			}
+			dir = dirInput
 		}
 		store, err := store.Load()
 		if err != nil {

@@ -20,6 +20,6 @@ func DownloadFile(srv *drive.Service, fileId, fileName string) error {
 		return err
 	}
 	defer out.Close()
-	_, errr := io.Copy(out, resp.Body)
-	return errr
+	_, err = io.Copy(out, resp.Body)
+	return err
 }
