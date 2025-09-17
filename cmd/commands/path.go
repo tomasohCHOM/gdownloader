@@ -93,6 +93,14 @@ var pathRemoveCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		alias := cmd.Flag("alias").Value.String()
 		store, err := store.Load()
+		if len(alias) == 0 {
+			aliasInput, err := text.RunTextInput("Enter the alias of the path to remove")
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				return err
+			}
+			alias = aliasInput
+		}
 		if err != nil {
 			return err
 		}

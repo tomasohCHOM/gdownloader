@@ -61,7 +61,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	s := strings.Builder{}
-	s.WriteString(fmt.Sprintf("%s\n", styles.HeaderStyle.Render(m.header)))
+	s.WriteString(fmt.Sprintf("\n%s\n\n", styles.HeaderStyle.Render(m.header)))
 	for i, choice := range m.options {
 		prefix := "( )"
 		if i == m.selected {

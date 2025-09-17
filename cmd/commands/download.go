@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tomasohCHOM/gdownloader/cmd/drive"
+	"github.com/tomasohCHOM/gdownloader/cmd/ui/text"
 )
 
 var DownloadCmd = &cobra.Command{
@@ -15,9 +16,10 @@ var DownloadCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		var searchQuery string
-		fmt.Print("Enter a search query to list some files: ")
-		fmt.Scan(&searchQuery)
+		searchQuery, err := text.RunTextInput("Enter a search query to list some files")
+		if err != nil {
+			return err
+		}
 		fmt.Println("Searching...")
 		files, err := drive.Search(srv, searchQuery)
 		if err != nil {
