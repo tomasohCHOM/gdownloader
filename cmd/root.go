@@ -25,6 +25,9 @@ var rootCmd = &cobra.Command{
 		for {
 			idx, _, err := selector.RunSelector(header, options)
 			if err != nil {
+				if err.Error() == selector.NO_SELECTION {
+					return
+				}
 				log.Fatalf("Selection error: %v\n", err)
 			}
 			switch idx {

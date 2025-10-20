@@ -18,7 +18,7 @@ func InitialTextModel(prompt string) model {
 	ti := textinput.New()
 	ti.Placeholder = ""
 	ti.Focus()
-	ti.CharLimit = 156 // arbitrary, adjust as needed
+	ti.CharLimit = 156
 	ti.Width = 40
 
 	return model{
@@ -42,8 +42,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case tea.KeyEnter:
-			m.textInput.Blur()
-			return m, tea.Quit
+			if len(m.textInput.Value()) > 1 {
+				m.textInput.Blur()
+				return m, tea.Quit
+			}
 		}
 	}
 

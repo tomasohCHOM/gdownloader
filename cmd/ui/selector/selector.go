@@ -8,6 +8,8 @@ import (
 	"github.com/tomasohCHOM/gdownloader/cmd/ui/styles"
 )
 
+const NO_SELECTION = "no valid selection made"
+
 type Model struct {
 	header   string
 	options  []string
@@ -53,6 +55,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.selected = m.cursor
 
 		case "enter":
+			_, m.err = m.handleSelection()
+			if m.err != nil {
+				break
+			}
 			return m, tea.Quit
 		}
 	}
@@ -93,7 +99,16 @@ func RunSelector(header string, options []string) (int, string, error) {
 		return -1, "", fmt.Errorf("unexpected model type %T", mFinal)
 	}
 	if sel.selected < 0 || sel.selected >= len(options) {
-		return -1, "", fmt.Errorf("no valid selection made")
+		return -1, "", fmt.Errorf(NO_SELECTION)
 	}
 	return sel.selected, options[sel.selected], nil
+}
+
+func (m *Model) handleSelection() (string, error) {
+	for i := range m.options {
+		if i == m.selected {
+			return m.options[i], nil
+		}
+	}
+	return "", fmt.Errorf("no options selected")
 }

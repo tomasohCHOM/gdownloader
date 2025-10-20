@@ -29,6 +29,9 @@ var PathCmd = &cobra.Command{
 		for {
 			idx, _, err := selector.RunSelector(header, options)
 			if err != nil {
+				if err.Error() == selector.NO_SELECTION {
+					return nil
+				}
 				fmt.Fprintf(os.Stderr, "Selection error: %v\n", err)
 				return nil
 			}
