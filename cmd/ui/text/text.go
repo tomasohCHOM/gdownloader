@@ -11,7 +11,7 @@ import (
 type model struct {
 	textInput textinput.Model
 	prompt    string
-	done      bool
+	exited    bool
 }
 
 func InitialTextModel(prompt string) model {
@@ -24,7 +24,7 @@ func InitialTextModel(prompt string) model {
 	return model{
 		prompt:    prompt,
 		textInput: ti,
-		done:      false,
+		exited:    false,
 	}
 }
 
@@ -39,6 +39,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
+			m.exited = true
 			return m, tea.Quit
 
 		case tea.KeyEnter:
@@ -61,12 +62,12 @@ func (m model) View() string {
 	)
 }
 
-func RunTextInput(prompt string) (string, error) {
+func RunTextInput(prompt string) (string, bool, error) {
 	p := tea.NewProgram(InitialTextModel(prompt))
 	m, err := p.Run()
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	final := m.(model)
-	return final.textInput.Value(), nil
+	return final.textInput.Value(), final.exited, nil
 }

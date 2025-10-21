@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tomasohCHOM/gdownloader/cmd/commands"
+	"github.com/tomasohCHOM/gdownloader/cmd/options"
 	"github.com/tomasohCHOM/gdownloader/cmd/ui/selector"
 )
 
@@ -20,26 +21,24 @@ var rootCmd = &cobra.Command{
 	Short: "A program to download Google Drive files from the command line",
 	Run: func(cmd *cobra.Command, args []string) {
 		header := "Select one of the following options to continue."
-		options := []string{"Download files", "Manage paths", "Exit"}
-
 		for {
-			idx, _, err := selector.RunSelector(header, options)
+			_, selected, err := selector.RunSelector(header, options.ROOT_CMD_OPTIONS)
 			if err != nil {
 				if err.Error() == selector.NO_SELECTION {
 					return
 				}
 				log.Fatalf("Selection error: %v\n", err)
 			}
-			switch idx {
-			case 0:
+			switch selected {
+			case options.DOWNLOAD:
 				if err := commands.DownloadCmd.RunE(cmd, []string{}); err != nil {
 					log.Fatalf("Error: %v\n", err)
 				}
-			case 1:
+			case options.PATH:
 				if err := commands.PathCmd.RunE(cmd, []string{}); err != nil {
 					log.Fatalf("Error: %v\n", err)
 				}
-			case 2:
+			case options.EXIT:
 				return
 			default:
 				fmt.Println("Invalid choice")

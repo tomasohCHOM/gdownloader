@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/tomasohCHOM/gdownloader/cmd/options"
 	"github.com/tomasohCHOM/gdownloader/cmd/store"
 	"github.com/tomasohCHOM/gdownloader/cmd/ui/selector"
 	"github.com/tomasohCHOM/gdownloader/cmd/ui/text"
@@ -24,10 +25,9 @@ var PathCmd = &cobra.Command{
 	Use:   "path",
 	Short: "Manage paths where you can download Google Drive files to",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		header := "Choose which path actions you would like to execute:"
-		options := []string{"Add path", "Remove path", "List paths", "Exit"}
+		header := "Choose one of the following path actions to continue:"
 		for {
-			idx, _, err := selector.RunSelector(header, options)
+			_, selected, err := selector.RunSelector(header, options.PATH_CMD_OPTIONS)
 			if err != nil {
 				if err.Error() == selector.NO_SELECTION {
 					return nil
@@ -35,14 +35,14 @@ var PathCmd = &cobra.Command{
 				fmt.Fprintf(os.Stderr, "Selection error: %v\n", err)
 				return nil
 			}
-			switch idx {
-			case 0:
+			switch selected {
+			case options.ADD_PATH:
 				return pathAddCmd.RunE(pathAddCmd, args)
-			case 1:
+			case options.REMOVE_PATH:
 				return pathRemoveCmd.RunE(pathRemoveCmd, args)
-			case 2:
+			case options.LIST_PATHS:
 				return pathListCmd.RunE(pathListCmd, args)
-			case 3:
+			case options.EXIT:
 				return nil
 			default:
 				fmt.Println("Invalid choice")
@@ -57,19 +57,25 @@ var pathAddCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		alias := cmd.Flag("alias").Value.String()
 		if len(alias) == 0 {
-			aliasInput, err := text.RunTextInput("Enter the alias of the path to add")
+			aliasInput, exited, err := text.RunTextInput("Enter the alias of the path to add")
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 				return err
+			}
+			if exited {
+				return nil
 			}
 			alias = aliasInput
 		}
 		dir := cmd.Flag("dir").Value.String()
 		if len(dir) == 0 {
-			dirInput, err := text.RunTextInput("Enter the directory path to add")
+			dirInput, exited, err := text.RunTextInput("Enter the directory path to add")
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 				return err
+			}
+			if exited {
+				return nil
 			}
 			dir = dirInput
 		}
@@ -97,10 +103,13 @@ var pathRemoveCmd = &cobra.Command{
 		alias := cmd.Flag("alias").Value.String()
 		store, err := store.Load()
 		if len(alias) == 0 {
-			aliasInput, err := text.RunTextInput("Enter the alias of the path to remove")
+			aliasInput, exited, err := text.RunTextInput("Enter the alias of the path to remove")
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 				return err
+			}
+			if exited {
+				return nil
 			}
 			alias = aliasInput
 		}

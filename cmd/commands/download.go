@@ -16,9 +16,12 @@ var DownloadCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		searchQuery, err := text.RunTextInput("Enter a search query to list some files")
+		searchQuery, exited, err := text.RunTextInput("Enter a search query to list some files")
 		if err != nil {
 			return err
+		}
+		if exited {
+			return nil
 		}
 		fmt.Println("Searching...")
 		files, err := drive.Search(srv, searchQuery)
