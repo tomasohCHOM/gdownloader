@@ -37,11 +37,20 @@ var PathCmd = &cobra.Command{
 			}
 			switch selected {
 			case options.ADD_PATH:
-				return pathAddCmd.RunE(pathAddCmd, args)
+				err := pathAddCmd.RunE(pathAddCmd, args)
+				if err != nil {
+					return err
+				}
 			case options.REMOVE_PATH:
-				return pathRemoveCmd.RunE(pathRemoveCmd, args)
+				err := pathRemoveCmd.RunE(pathRemoveCmd, args)
+				if err != nil {
+					return err
+				}
 			case options.LIST_PATHS:
-				return pathListCmd.RunE(pathListCmd, args)
+				err := pathListCmd.RunE(pathListCmd, args)
+				if err != nil {
+					return err
+				}
 			case options.EXIT:
 				return nil
 			default:
