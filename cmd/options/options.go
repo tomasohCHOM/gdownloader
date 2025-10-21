@@ -15,4 +15,6 @@ const (
 var ROOT_CMD_OPTIONS = []string{DOWNLOAD, PATH, EXIT}
 var PATH_CMD_OPTIONS = []string{ADD_PATH, REMOVE_PATH, LIST_PATHS, EXIT}
 
-const DOWNlOAD_QUERY_MORE_PROMPT = "Search next page"
+const NEXT_PAGE_PROMPT = "Go to next page"
+const PREVIOUS_PAGE_PROMPT = "Go to previous page"
+const RETRY_SEARCH_PROMPT = "Try another search query"
