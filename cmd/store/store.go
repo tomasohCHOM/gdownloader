@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type Store struct {
@@ -49,4 +50,26 @@ func (store *Store) Save() error {
 		return err
 	}
 	return os.WriteFile(path, data, 0644)
+}
+
+func CheckPathExists(path string) (bool, error) {
+	if strings.HasPrefix(path, "~") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return false, err
+		}
+		path = filepath.Join(home, strings.TrimPrefix(path, "~"))
+	}
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return false, err
+	}
+	_, err = os.Stat(absPath)
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }

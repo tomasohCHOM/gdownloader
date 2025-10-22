@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/user"
 	"path/filepath"
 	"strings"
 
@@ -14,9 +13,11 @@ import (
 
 func DownloadFile(srv *drive.Service, fileId, fileName string, path string) error {
 	if strings.HasPrefix(path, "~") {
-		usr, _ := user.Current()
-		homeDir := usr.HomeDir
-		path = filepath.Join(homeDir, strings.TrimPrefix(path, "~"))
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return err
+		}
+		path = filepath.Join(home, strings.TrimPrefix(path, "~"))
 	}
 	file, err := srv.Files.Get(fileId).Fields("mimeType", "name").Do()
 	if err != nil {

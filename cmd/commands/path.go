@@ -79,6 +79,14 @@ var pathAddCmd = &cobra.Command{
 			}
 			dir = dirInput
 		}
+		pathExists, err := store.CheckPathExists(dir)
+		if err != nil {
+			log.Fatalf("Failed to check path: %v", err)
+		}
+		if !pathExists {
+			fmt.Println("Invalid directory path, ensure this path exists")
+			return
+		}
 		store, err := store.Load()
 		if err != nil {
 			log.Fatalf("Failed to load path store: %v", err)
