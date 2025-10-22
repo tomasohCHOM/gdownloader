@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -22,26 +21,23 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		header := "Select one of the following options to continue."
 		for {
-			_, selected, err := selector.RunSelector(header, options.ROOT_CMD_OPTIONS)
+			selected, exited, err := selector.RunSelector(header, options.ROOT_CMD_OPTIONS)
 			if err != nil {
-				if err.Error() == selector.NO_SELECTION {
-					return
-				}
-				log.Fatalf("Selection error: %v\n", err)
+				log.Fatalf("Selection error: %v", err)
 			}
+			if exited {
+				return
+			}
+			args := make([]string, 0)
 			switch selected {
 			case options.DOWNLOAD:
-				if err := commands.DownloadCmd.RunE(cmd, []string{}); err != nil {
-					log.Fatalf("Error: %v\n", err)
-				}
+				commands.DownloadCmd.Run(cmd, args)
 			case options.PATH:
-				if err := commands.PathCmd.RunE(cmd, []string{}); err != nil {
-					log.Fatalf("Error: %v\n", err)
-				}
+				commands.PathCmd.Run(cmd, args)
 			case options.EXIT:
 				return
 			default:
-				fmt.Println("Invalid choice")
+				log.Fatalf("Invalid command selection")
 			}
 		}
 	},

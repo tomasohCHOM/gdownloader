@@ -14,20 +14,6 @@ type model struct {
 	exited    bool
 }
 
-func InitialTextModel(prompt string) model {
-	ti := textinput.New()
-	ti.Placeholder = ""
-	ti.Focus()
-	ti.CharLimit = 156
-	ti.Width = 40
-
-	return model{
-		prompt:    prompt,
-		textInput: ti,
-		exited:    false,
-	}
-}
-
 func (m model) Init() tea.Cmd {
 	return textinput.Blink
 }
@@ -56,14 +42,28 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	return fmt.Sprintf(
-		"\n%s\n\n%s\n\n",
+		"\n%s\n\n%s\n",
 		styles.HeaderStyle.Render(m.prompt),
 		styles.SelectedTextStyle.Render(m.textInput.View()),
 	)
 }
 
+func initialTextModel(prompt string) model {
+	ti := textinput.New()
+	ti.Placeholder = ""
+	ti.Focus()
+	ti.CharLimit = 156
+	ti.Width = 40
+
+	return model{
+		prompt:    prompt,
+		textInput: ti,
+		exited:    false,
+	}
+}
+
 func RunTextInput(prompt string) (string, bool, error) {
-	p := tea.NewProgram(InitialTextModel(prompt))
+	p := tea.NewProgram(initialTextModel(prompt))
 	m, err := p.Run()
 	if err != nil {
 		return "", false, err

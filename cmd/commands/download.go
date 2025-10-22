@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/tomasohCHOM/gdownloader/cmd/options"
 	"github.com/tomasohCHOM/gdownloader/cmd/store"
 	"github.com/tomasohCHOM/gdownloader/cmd/ui/selector"
+	"github.com/tomasohCHOM/gdownloader/cmd/ui/styles"
 	"github.com/tomasohCHOM/gdownloader/cmd/ui/text"
 	gdrive "google.golang.org/api/drive/v3"
 )
@@ -22,41 +24,41 @@ type Page struct {
 var DownloadCmd = &cobra.Command{
 	Use:   "download",
 	Short: "Download Google Drive files to a specified path",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		srv, err := drive.Setup()
 		if err != nil {
-			return err
+			log.Fatalf("Failed to setup Google Drive client: %v", err)
 		}
 		store, err := store.Load()
 		if err != nil {
-			return err
+			log.Fatalf("Failed to load path store: %v", err)
 		}
 		if len(store.Paths) == 0 {
-			fmt.Println("No paths saved. Use the path command to store some paths")
-			return nil
+			fmt.Println(styles.DimStyle.Render("\nNo paths saved. Use the path command to store some paths"))
+			return
 		}
 		paths := make([]string, 0, len(store.Paths))
 		for alias, dir := range store.Paths {
 			paths = append(paths, fmt.Sprintf("%s: %s", alias, dir))
 		}
-		_, selected, err := selector.RunSelector("Choose the destination path", paths)
+		selected, _, err := selector.RunSelector("Choose the destination path", paths)
 		if err != nil {
-			return err
+			log.Fatalf("Selection error: %v", err)
 		}
 		path := strings.Split(selected, ": ")[1]
 		for {
 			searchQuery, exited, err := text.RunTextInput("Enter a search query to list some files")
 			if err != nil {
-				return err
+				log.Fatalf("Selection error: %v", err)
 			}
 			if exited {
-				return nil
+				return
 			}
 			fmt.Println("Searching...")
 			call := drive.Search(srv, searchQuery)
 			resp, err := call.Do()
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error while searching: %v\n", err)
+				fmt.Printf("\nFailed to search file from Google Drive: %s\n", err)
 				continue
 			}
 			if len(resp.Files) == 0 {
@@ -70,7 +72,7 @@ var DownloadCmd = &cobra.Command{
 				files := currentPage.Files
 				fileOptions := make([]string, 0, len(files)+3)
 				for _, file := range files {
-					fileOptions = append(fileOptions, fmt.Sprintf("%s", file.Name))
+					fileOptions = append(fileOptions, file.Name)
 				}
 				if pageIndex > 0 {
 					fileOptions = append(fileOptions, options.PREVIOUS_PAGE_PROMPT)
@@ -80,14 +82,16 @@ var DownloadCmd = &cobra.Command{
 				}
 				fileOptions = append(fileOptions, options.RETRY_SEARCH_PROMPT)
 				fileOptions = append(fileOptions, options.EXIT)
-				_, selected, err := selector.RunSelector("Select a file to download", fileOptions)
+				selected, exited, err := selector.RunSelector("Select a file to download", fileOptions)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-					return err
+					log.Fatalf("Selection error: %v", err)
+				}
+				if exited {
+					return
 				}
 				switch selected {
 				case options.EXIT:
-					return nil
+					return
 				case options.RETRY_SEARCH_PROMPT:
 					goto nextSearch
 				case options.NEXT_PAGE_PROMPT:
@@ -122,11 +126,12 @@ var DownloadCmd = &cobra.Command{
 						}
 					}
 					if selectedFileId == "" {
-						fmt.Fprintf(os.Stderr, "Could not find file ID for %s\n", selected)
+						fmt.Fprintf(os.Stderr, "Failed to find file ID for %s\n", selected)
 						continue
 					}
 					fmt.Printf("Downloading %s...\n", selected)
-					return drive.DownloadFile(srv, selectedFileId, selected, path)
+					drive.DownloadFile(srv, selectedFileId, selected, path)
+					return
 				}
 			}
 		nextSearch:

@@ -8,35 +8,25 @@ import (
 	"github.com/tomasohCHOM/gdownloader/cmd/ui/styles"
 )
 
-const NO_SELECTION = "no valid selection made"
-
-type Model struct {
-	header   string
+type model struct {
 	options  []string
 	cursor   int
 	selected int
+	prompt   string
+	exited   bool
 	err      error
 }
 
-func InitialSelectionModel(header string, options []string) Model {
-	return Model{
-		header:   header,
-		options:  options,
-		selected: -1,
-		cursor:   0,
-		err:      nil,
-	}
-}
-
-func (m Model) Init() tea.Cmd {
+func (m model) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c", "esc":
+			m.exited = true
 			return m, tea.Quit
 
 		case "up", "k":
@@ -65,9 +55,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) View() string {
+func (m model) View() string {
 	s := strings.Builder{}
-	s.WriteString(fmt.Sprintf("\n%s\n\n", styles.HeaderStyle.Render(m.header)))
+	s.WriteString(fmt.Sprintf("\n%s\n\n", styles.HeaderStyle.Render(m.prompt)))
 	for i, choice := range m.options {
 		prefix := "( )"
 		if i == m.selected {
@@ -83,32 +73,38 @@ func (m Model) View() string {
 		}
 	}
 	helpOptions := "(Press [space] to select, enter to continue. Press q, esc, or ctrl-c to quit)"
-	s.WriteString(fmt.Sprintf("\n%s\n", helpOptions))
+	s.WriteString(fmt.Sprintf("\n%s", helpOptions))
 	return s.String()
 }
 
-func RunSelector(header string, options []string) (int, string, error) {
-	m0 := InitialSelectionModel(header, options)
-	p := tea.NewProgram(m0)
-	mFinal, err := p.Run()
-	if err != nil {
-		return -1, "", err
+func initialSelectionModel(prompt string, options []string) model {
+	return model{
+		options:  options,
+		cursor:   0,
+		selected: -1,
+		prompt:   prompt,
+		err:      nil,
 	}
-	sel, ok := mFinal.(Model)
-	if !ok {
-		return -1, "", fmt.Errorf("unexpected model type %T", mFinal)
-	}
-	if sel.selected < 0 || sel.selected >= len(options) {
-		return -1, "", fmt.Errorf(NO_SELECTION)
-	}
-	return sel.selected, options[sel.selected], nil
 }
 
-func (m *Model) handleSelection() (string, error) {
+func (m *model) handleSelection() (string, error) {
 	for i := range m.options {
 		if i == m.selected {
 			return m.options[i], nil
 		}
 	}
 	return "", fmt.Errorf("no options selected")
+}
+
+func RunSelector(header string, options []string) (string, bool, error) {
+	p := tea.NewProgram(initialSelectionModel(header, options))
+	m, err := p.Run()
+	if err != nil {
+		return "", false, err
+	}
+	sel := m.(model)
+	if sel.selected < 0 || sel.selected >= len(options) {
+		return "", true, nil
+	}
+	return options[sel.selected], false, nil
 }

@@ -2,12 +2,15 @@ package commands
 
 import (
 	"fmt"
-	"os"
+	"log"
+	"maps"
+	"slices"
 
 	"github.com/spf13/cobra"
 	"github.com/tomasohCHOM/gdownloader/cmd/options"
 	"github.com/tomasohCHOM/gdownloader/cmd/store"
 	"github.com/tomasohCHOM/gdownloader/cmd/ui/selector"
+	"github.com/tomasohCHOM/gdownloader/cmd/ui/styles"
 	"github.com/tomasohCHOM/gdownloader/cmd/ui/text"
 )
 
@@ -24,37 +27,27 @@ func init() {
 var PathCmd = &cobra.Command{
 	Use:   "path",
 	Short: "Manage paths where you can download Google Drive files to",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		header := "Choose one of the following path actions to continue:"
 		for {
-			_, selected, err := selector.RunSelector(header, options.PATH_CMD_OPTIONS)
+			selected, exited, err := selector.RunSelector(header, options.PATH_CMD_OPTIONS)
 			if err != nil {
-				if err.Error() == selector.NO_SELECTION {
-					return nil
-				}
-				fmt.Fprintf(os.Stderr, "Selection error: %v\n", err)
-				return nil
+				log.Fatalf("Selection error: %v", err)
+			}
+			if exited {
+				return
 			}
 			switch selected {
 			case options.ADD_PATH:
-				err := pathAddCmd.RunE(pathAddCmd, args)
-				if err != nil {
-					return err
-				}
+				pathAddCmd.Run(pathAddCmd, args)
 			case options.REMOVE_PATH:
-				err := pathRemoveCmd.RunE(pathRemoveCmd, args)
-				if err != nil {
-					return err
-				}
+				pathRemoveCmd.Run(pathRemoveCmd, args)
 			case options.LIST_PATHS:
-				err := pathListCmd.RunE(pathListCmd, args)
-				if err != nil {
-					return err
-				}
+				pathListCmd.Run(pathListCmd, args)
 			case options.EXIT:
-				return nil
+				return
 			default:
-				fmt.Println("Invalid choice")
+				log.Fatalf("Invalid command selection")
 			}
 		}
 	},
@@ -63,16 +56,15 @@ var PathCmd = &cobra.Command{
 var pathAddCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Store a new path",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		alias := cmd.Flag("alias").Value.String()
 		if len(alias) == 0 {
 			aliasInput, exited, err := text.RunTextInput("Enter the alias of the path to add")
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-				return err
+				log.Fatalf("Error while processing text input: %v", err)
 			}
 			if exited {
-				return nil
+				return
 			}
 			alias = aliasInput
 		}
@@ -80,80 +72,82 @@ var pathAddCmd = &cobra.Command{
 		if len(dir) == 0 {
 			dirInput, exited, err := text.RunTextInput("Enter the directory path to add")
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-				return err
+				log.Fatalf("Error while processing text input: %v", err)
 			}
 			if exited {
-				return nil
+				return
 			}
 			dir = dirInput
 		}
 		store, err := store.Load()
 		if err != nil {
-			return err
+			log.Fatalf("Failed to load path store: %v", err)
 		}
 		_, ok := store.Paths[alias]
 		if ok {
 			fmt.Println("Path already exits:", dir)
-			return nil
+			return
 		}
 		store.Paths[alias] = dir
 		if err := store.Save(); err != nil {
-			return err
+			log.Fatalf("Failed to add path to store: %v", err)
 		}
-		return nil
 	},
 }
 
 var pathRemoveCmd = &cobra.Command{
 	Use:   "remove [path]",
 	Short: "Remove a path",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		alias := cmd.Flag("alias").Value.String()
 		store, err := store.Load()
+		if err != nil {
+			log.Fatalf("Failed to load path store: %v", err)
+		}
+		if len(store.Paths) == 0 {
+			fmt.Println(styles.DimStyle.Render("\nNo paths saved."))
+			return
+		}
 		if len(alias) == 0 {
-			aliasInput, exited, err := text.RunTextInput("Enter the alias of the path to remove")
+			aliasInput, exited, err := selector.RunSelector("Enter the alias of the path to remove", slices.Collect(maps.Values(store.Paths)))
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-				return err
+				log.Fatalf("Selection error: %v", err)
 			}
 			if exited {
-				return nil
+				return
 			}
 			alias = aliasInput
 		}
 		if err != nil {
-			return err
+			log.Fatalf("Selection error: %v", err)
 		}
 		_, ok := store.Paths[alias]
 		if !ok {
 			fmt.Println("Path alias not found:", alias)
-			return nil
+			return
 		}
 		delete(store.Paths, alias)
 		if err := store.Save(); err != nil {
-			return err
+			log.Fatalf("Failed to delete path from store: %v", err)
 		}
 		fmt.Println("Removed path with alias:", alias)
-		return nil
 	},
 }
 
 var pathListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all saved paths",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		store, err := store.Load()
 		if err != nil {
-			return err
+			log.Fatalf("Failed to load path store: %v", err)
 		}
 		if len(store.Paths) == 0 {
-			fmt.Println("No paths saved.")
-			return nil
+			fmt.Println(styles.DimStyle.Render("\nNo paths saved."))
+			return
 		}
 		for alias, dir := range store.Paths {
-			fmt.Printf("%s: %s\n", alias, dir)
+			fmt.Printf("%s: %s\n", styles.SelectedTextStyle.Render(alias), styles.HeaderStyle.Render(dir))
 		}
-		return nil
 	},
 }
