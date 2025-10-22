@@ -36,7 +36,7 @@ func getClient(config *oauth2.Config) (*oauth2.Token, error) {
 
 func getTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
 	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-	fmt.Printf("Go to the following link in your browser and enter the code:\n%v\n", authURL)
+	fmt.Printf("\nGo to the following link in your browser and enter the code:\n%v\n", authURL)
 	var code string
 	if _, err := fmt.Scan(&code); err != nil {
 		return nil, fmt.Errorf("unable to read authorization code: %w", err)
@@ -75,6 +75,6 @@ func saveToken(token *oauth2.Token) error {
 	if err := json.NewEncoder(f).Encode(token); err != nil {
 		return fmt.Errorf("failed to encode token: %w", err)
 	}
-	fmt.Printf("Saved OAuth token to %s\n", path)
+	fmt.Printf("\nSaved OAuth token to %s\n", path)
 	return nil
 }

@@ -58,11 +58,11 @@ var DownloadCmd = &cobra.Command{
 			call := drive.Search(srv, searchQuery)
 			resp, err := call.Do()
 			if err != nil {
-				fmt.Printf("\nFailed to search file from Google Drive: %s\n", err)
+				fmt.Println(styles.ErrorStyle.Render(fmt.Sprintf("\nFailed to search file from Google Drive: %s", err)))
 				continue
 			}
 			if len(resp.Files) == 0 {
-				fmt.Println("No files found for that query.")
+				fmt.Println(styles.DimStyle.Render("\nNo files found for that query."))
 				continue
 			}
 			pages := []Page{{Files: resp.Files, PageToken: resp.NextPageToken}}

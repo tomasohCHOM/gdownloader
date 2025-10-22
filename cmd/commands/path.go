@@ -83,7 +83,7 @@ var pathAddCmd = &cobra.Command{
 			log.Fatalf("Failed to check path: %v", err)
 		}
 		if !pathExists {
-			fmt.Println("Invalid directory path, ensure this path exists")
+			fmt.Println(styles.ErrorStyle.Render("\nInvalid directory path, ensure this path exists"))
 			return
 		}
 		store, err := store.Load()
@@ -92,13 +92,14 @@ var pathAddCmd = &cobra.Command{
 		}
 		_, ok := store.Paths[alias]
 		if ok {
-			fmt.Println("Path already exits:", dir)
+			fmt.Println(styles.DimStyle.Render(fmt.Sprintf("\nPath already exits: %s", dir)))
 			return
 		}
 		store.Paths[alias] = dir
 		if err := store.Save(); err != nil {
 			log.Fatalf("Failed to add path to store: %v", err)
 		}
+		fmt.Println(styles.ContrastStyle.Render(fmt.Sprintf("\nAdded path with alias: %s", alias)))
 	},
 }
 
@@ -134,14 +135,14 @@ var pathRemoveCmd = &cobra.Command{
 		}
 		_, ok := store.Paths[alias]
 		if !ok {
-			fmt.Println("Path alias not found:", alias)
+			fmt.Println(styles.ErrorStyle.Render(fmt.Sprintf("\nPath alias not found: %s", alias)))
 			return
 		}
 		delete(store.Paths, alias)
 		if err := store.Save(); err != nil {
 			log.Fatalf("Failed to delete path from store: %v", err)
 		}
-		fmt.Println("\nRemoved path with alias:", alias)
+		fmt.Println(styles.ContrastStyle.Render(fmt.Sprintf("\nRemoved path with alias: %s", alias)))
 	},
 }
 
@@ -157,7 +158,7 @@ var pathListCmd = &cobra.Command{
 			fmt.Println(styles.DimStyle.Render("\nNo paths saved."))
 			return
 		}
-		fmt.Printf("\n%s\n\n", styles.ContrastStyle.Render("List of stored paths"))
+		fmt.Printf("\n%s\n\n", styles.ContrastStyle.Render("List of stored paths:"))
 		for alias, dir := range store.Paths {
 			fmt.Printf("- %s: %s\n", styles.NormalTextStyle.Render(alias), styles.DimStyle.Render(dir))
 		}
