@@ -43,8 +43,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	return fmt.Sprintf(
 		"\n%s\n\n%s\n",
-		styles.HeaderStyle.Render(m.prompt),
-		styles.SelectedTextStyle.Render(m.textInput.View()),
+		styles.PromptStyle.Render(m.prompt),
+		styles.NormalTextStyle.Render(m.textInput.View()),
 	)
 }
 

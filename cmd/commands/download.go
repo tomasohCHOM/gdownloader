@@ -54,7 +54,7 @@ var DownloadCmd = &cobra.Command{
 			if exited {
 				return
 			}
-			fmt.Println("Searching...")
+			fmt.Println(styles.DimStyle.Render("\nSearching..."))
 			call := drive.Search(srv, searchQuery)
 			resp, err := call.Do()
 			if err != nil {
@@ -98,7 +98,7 @@ var DownloadCmd = &cobra.Command{
 					pageIndex++
 					if pageIndex == len(pages) {
 						if currentPage.PageToken == "" {
-							fmt.Println("No more pages.")
+							fmt.Println(styles.DimStyle.Render("\nNo more pages."))
 							pageIndex--
 							continue
 						}
@@ -129,8 +129,9 @@ var DownloadCmd = &cobra.Command{
 						fmt.Fprintf(os.Stderr, "Failed to find file ID for %s\n", selected)
 						continue
 					}
-					fmt.Printf("Downloading %s...\n", selected)
+					fmt.Println(styles.DimStyle.Render(fmt.Sprintf("\nDownloading %s...", selected)))
 					drive.DownloadFile(srv, selectedFileId, selected, path)
+					fmt.Println(styles.ContrastStyle.Render(fmt.Sprintf("\nSaved file to: %s", path)))
 					return
 				}
 			}

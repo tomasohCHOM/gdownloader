@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -17,31 +16,36 @@ func tokenFilePath() string {
 }
 
 func credentialsFilePath() string {
-	return filepath.Join("credentials.json")
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".gdownloader", "credentials.json")
 }
 
-func getClient(config *oauth2.Config) *oauth2.Token {
+func getClient(config *oauth2.Config) (*oauth2.Token, error) {
 	tok, err := tokenFromFile()
 	if err != nil {
-		tok = getTokenFromWeb(config)
-		saveToken(tok)
+		tok, err = getTokenFromWeb(config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get token from web: %w", err)
+		}
+		if err := saveToken(tok); err != nil {
+			return nil, fmt.Errorf("failed to save token: %w", err)
+		}
 	}
-	return tok
+	return tok, nil
 }
 
-func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
+func getTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
 	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
 	fmt.Printf("Go to the following link in your browser and enter the code:\n%v\n", authURL)
-
 	var code string
 	if _, err := fmt.Scan(&code); err != nil {
-		log.Fatalf("Unable to read authorization code: %v", err)
+		return nil, fmt.Errorf("unable to read authorization code: %w", err)
 	}
 	tok, err := config.Exchange(context.Background(), code)
 	if err != nil {
-		log.Fatalf("Unable to retrieve token: %v", err)
+		return nil, fmt.Errorf("unable to retrieve token from web: %w", err)
 	}
-	return tok
+	return tok, nil
 }
 
 func tokenFromFile() (*oauth2.Token, error) {
@@ -52,17 +56,25 @@ func tokenFromFile() (*oauth2.Token, error) {
 	}
 	defer f.Close()
 	tok := &oauth2.Token{}
-	return tok, json.NewDecoder(f).Decode(tok)
+	if err := json.NewDecoder(f).Decode(tok); err != nil {
+		return nil, fmt.Errorf("failed to decode token file: %w", err)
+	}
+	return tok, nil
 }
 
-func saveToken(token *oauth2.Token) {
+func saveToken(token *oauth2.Token) error {
 	path := tokenFilePath()
-	os.MkdirAll(filepath.Dir(path), 0700)
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+		return fmt.Errorf("failed to create token directory: %w", err)
+	}
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		log.Fatalf("Unable to save token: %v", err)
+		return fmt.Errorf("failed to open token file: %w", err)
 	}
 	defer f.Close()
-	json.NewEncoder(f).Encode(token)
+	if err := json.NewEncoder(f).Encode(token); err != nil {
+		return fmt.Errorf("failed to encode token: %w", err)
+	}
 	fmt.Printf("Saved OAuth token to %s\n", path)
+	return nil
 }

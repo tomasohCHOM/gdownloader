@@ -44,7 +44,6 @@ func DownloadFile(srv *drive.Service, fileId, fileName string, path string) erro
 	if _, err := io.Copy(out, resp.Body); err != nil {
 		return fmt.Errorf("failed to save file: %w", err)
 	}
-	fmt.Printf("Saved file to: %s\n", outPath)
 	return nil
 }
 

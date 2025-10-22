@@ -57,12 +57,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	s := strings.Builder{}
-	s.WriteString(fmt.Sprintf("\n%s\n\n", styles.HeaderStyle.Render(m.prompt)))
+	s.WriteString(fmt.Sprintf("\n%s\n\n", styles.PromptStyle.Render(m.prompt)))
 	for i, choice := range m.options {
 		prefix := "( )"
 		if i == m.selected {
 			prefix = styles.SelectedCheckboxStyle.Render("(•)")
-			choice = styles.SelectedTextStyle.Render(choice)
+			choice = styles.NormalTextStyle.Render(choice)
 		}
 		line := fmt.Sprintf("%s %s", prefix, choice)
 		if i == m.cursor {
@@ -96,8 +96,8 @@ func (m *model) handleSelection() (string, error) {
 	return "", fmt.Errorf("no options selected")
 }
 
-func RunSelector(header string, options []string) (string, bool, error) {
-	p := tea.NewProgram(initialSelectionModel(header, options))
+func RunSelector(prompt string, options []string) (string, bool, error) {
+	p := tea.NewProgram(initialSelectionModel(prompt, options))
 	m, err := p.Run()
 	if err != nil {
 		return "", false, err

@@ -19,7 +19,11 @@ func Setup() (*drive.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx, token := context.Background(), getClient(config)
+	token, err := getClient(config)
+	if err != nil {
+		return nil, err
+	}
+	ctx := context.Background()
 	client := config.Client(ctx, token)
 	return drive.NewService(ctx, option.WithHTTPClient(client))
 }

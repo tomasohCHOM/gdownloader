@@ -19,9 +19,9 @@ var rootCmd = &cobra.Command{
 	Use:   "gd-downloader",
 	Short: "A program to download Google Drive files from the command line",
 	Run: func(cmd *cobra.Command, args []string) {
-		header := "Select one of the following options to continue."
+		prompt := "Select one of the following actions to continue:"
 		for {
-			selected, exited, err := selector.RunSelector(header, options.ROOT_CMD_OPTIONS)
+			selected, exited, err := selector.RunSelector(prompt, options.ROOT_CMD_OPTIONS)
 			if err != nil {
 				log.Fatalf("Selection error: %v", err)
 			}
