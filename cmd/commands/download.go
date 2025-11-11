@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/tomasohCHOM/gdownloader/cmd/drive"
 	"github.com/tomasohCHOM/gdownloader/cmd/options"
 	"github.com/tomasohCHOM/gdownloader/cmd/store"
+	"github.com/tomasohCHOM/gdownloader/cmd/ui/multiselector"
 	"github.com/tomasohCHOM/gdownloader/cmd/ui/selector"
 	"github.com/tomasohCHOM/gdownloader/cmd/ui/styles"
 	"github.com/tomasohCHOM/gdownloader/cmd/ui/text"
@@ -82,57 +84,57 @@ var DownloadCmd = &cobra.Command{
 				}
 				fileOptions = append(fileOptions, options.RETRY_SEARCH_PROMPT)
 				fileOptions = append(fileOptions, options.EXIT)
-				selected, exited, err := selector.RunSelector("Select a file to download", fileOptions)
+				selectedOptions, exited, err := multiselector.RunMultiSelector("Select a file to download", fileOptions)
 				if err != nil {
 					log.Fatalf("Selection error: %v", err)
 				}
-				if exited {
+				if exited || slices.Contains(selectedOptions, options.EXIT) {
 					return
 				}
-				switch selected {
-				case options.EXIT:
-					return
-				case options.RETRY_SEARCH_PROMPT:
-					goto nextSearch
-				case options.NEXT_PAGE_PROMPT:
-					pageIndex++
-					if pageIndex == len(pages) {
-						if currentPage.PageToken == "" {
-							fmt.Println(styles.DimStyle.Render("\nNo more pages."))
-							pageIndex--
-							continue
+
+				for _, selected := range selectedOptions {
+					switch selected {
+					case options.RETRY_SEARCH_PROMPT:
+						goto nextSearch
+					case options.NEXT_PAGE_PROMPT:
+						pageIndex++
+						if pageIndex == len(pages) {
+							if currentPage.PageToken == "" {
+								fmt.Println(styles.DimStyle.Render("\nNo more pages."))
+								pageIndex--
+								continue
+							}
+							call := drive.Search(srv, searchQuery).PageToken(currentPage.PageToken)
+							resp, err := call.Do()
+							if err != nil {
+								fmt.Fprintf(os.Stderr, "Error fetching next page: %v\n", err)
+								pageIndex--
+								continue
+							}
+							pages = append(pages, Page{Files: resp.Files, PageToken: resp.NextPageToken})
 						}
-						call := drive.Search(srv, searchQuery).PageToken(currentPage.PageToken)
-						resp, err := call.Do()
-						if err != nil {
-							fmt.Fprintf(os.Stderr, "Error fetching next page: %v\n", err)
-							pageIndex--
-							continue
-						}
-						pages = append(pages, Page{Files: resp.Files, PageToken: resp.NextPageToken})
-					}
-					continue
-				case options.PREVIOUS_PAGE_PROMPT:
-					if pageIndex > 0 {
-						pageIndex--
-					}
-					continue
-				default:
-					var selectedFileId string
-					for _, file := range files {
-						if file.Name == selected {
-							selectedFileId = file.Id
-							break
-						}
-					}
-					if selectedFileId == "" {
-						fmt.Fprintf(os.Stderr, "Failed to find file ID for %s\n", selected)
 						continue
+					case options.PREVIOUS_PAGE_PROMPT:
+						if pageIndex > 0 {
+							pageIndex--
+						}
+						continue
+					default:
+						var selectedFileId string
+						for _, file := range files {
+							if file.Name == selected {
+								selectedFileId = file.Id
+								break
+							}
+						}
+						if selectedFileId == "" {
+							fmt.Fprintf(os.Stderr, "Failed to find file ID for %s\n", selected)
+							continue
+						}
+						fmt.Println(styles.DimStyle.Render(fmt.Sprintf("\nDownloading %s...", selected)))
+						drive.DownloadFile(srv, selectedFileId, selected, path)
+						fmt.Println(styles.ContrastStyle.Render(fmt.Sprintf("\nSaved file to: %s", path)))
 					}
-					fmt.Println(styles.DimStyle.Render(fmt.Sprintf("\nDownloading %s...", selected)))
-					drive.DownloadFile(srv, selectedFileId, selected, path)
-					fmt.Println(styles.ContrastStyle.Render(fmt.Sprintf("\nSaved file to: %s", path)))
-					return
 				}
 			}
 		nextSearch:
